@@ -23,4 +23,10 @@ app.use(express.static("public"));
 // basically cookie pe curd operation perform kar payenge
 app.use(cookieParser());
 
+
+// routes
+import userRouter from "./routes/user.routes.js";
+
+app.use("/api/v1/users",userRouter);
+
 export { app };
