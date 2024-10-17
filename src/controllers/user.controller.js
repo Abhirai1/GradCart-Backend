@@ -1,4 +1,4 @@
-import { asynHandler } from "../utils/asyncHandler.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import User from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js";
@@ -20,7 +20,7 @@ const generateAccessAndRefreshTokes = async (userId) =>{
     }
 }
 
-const registerUser = asynHandler (async (req,res)  => {
+const registerUser = asyncHandler (async (req,res)  => {
     // get user detail from frontend 
     // validation - not empty
     // check if user already exists - email se check karenge
@@ -73,7 +73,7 @@ const registerUser = asynHandler (async (req,res)  => {
     )
 })
 
-const loginUser = asynHandler (async (req,res) => {
+const loginUser = asyncHandler (async (req,res) => {
     /* 
     1. req.body - data
     2. email
@@ -125,7 +125,7 @@ const loginUser = asynHandler (async (req,res) => {
 
 })
 
-const logoutUser = asynHandler (async (req,res) => {
+const logoutUser = asyncHandler (async (req,res) => {
     /*
     1. find kar lo user but id knha se ?
     */
@@ -154,7 +154,45 @@ const logoutUser = asynHandler (async (req,res) => {
       .json(new ApiResponse(200, {}, "user logged out successfully"));
 })
 
-const refreshAccessToken = asynHandler(async (req, res) => {
+// Get All Users
+export const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find().select("-password -refreshToken");
+  res.status(200).json(new ApiResponse(200, users, "Users fetched successfully"));
+});
+
+// Get User by ID
+export const getUserById = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id).select(
+    "-password -refreshToken"
+  );
+  if (!user) throw new ApiError(404, "User not found");
+  res.status(200).json(new ApiResponse(200, user, "User fetched successfully"));
+});
+
+// Update User
+export const updateUser = asyncHandler(async (req, res) => {
+  const { username, college } = req.body;
+  const user = await User.findById(req.params.id);
+  if (!user) throw new ApiError(404, "User not found");
+  if (username) user.username = username;
+  if (college) user.college = college;
+  await user.save();
+  const updatedUser = await User.findById(req.params.id).select(
+    "-password -refreshToken"
+  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "User updated successfully"));
+});
+
+// Delete User
+export const deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findByIdAndDelete(req.params.id);
+  if (!user) throw new ApiError(404, "User not found");
+  res.status(200).json(new ApiResponse(200, {}, "User deleted successfully"));
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
 
